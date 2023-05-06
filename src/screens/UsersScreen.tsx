@@ -1,10 +1,24 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Button from '@mui/material/Button';
 import { users } from "../resources/Users.ts";
 import { Container, Divider, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { NavLink } from "react-router-dom";
+import { getUsers } from "../resources/UsersFirebase.ts";
+import useForm from "../hooks/useForm.js";
+import { DocumentData, QueryDocumentSnapshot, QuerySnapshot } from "firebase/firestore";
 
 function UsersScreen() {
+
+  const [ users, setUsers ] = useState<QueryDocumentSnapshot<DocumentData>[] | []>([]);
+
+  useEffect(() => {
+    getUsersData();
+  },[]);
+
+  const getUsersData = async () => {
+    const fbUsers = await getUsers();
+    setUsers(fbUsers.docs); 
+  }
 
     return (
       <Container>
@@ -15,6 +29,10 @@ function UsersScreen() {
               <Typography variant="h4">
                 Users list
               </Typography>
+              <NavLink 
+                to={`/users/0`} 
+                className="btn btn-info mx-2"
+              >Add new user</NavLink>
               <Divider color="black" />
             </Grid>
           </Grid>
@@ -34,24 +52,30 @@ function UsersScreen() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {users.map(({ id, name, address, role, salary }) => (
-                      <TableRow
-                        key={id}
-                        sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                      >
-                        <TableCell>{id}</TableCell>
-                        <TableCell align="right"> {name}</TableCell>
-                        <TableCell align="right">{address}</TableCell>
-                        <TableCell align="right">{role}</TableCell>
-                        <TableCell align="right">{salary}</TableCell>
-                        <TableCell >
-                          <NavLink 
-                            to={`/users/${id}`} 
-                            className="btn btn-info mx-2"
-                          >Edit</NavLink>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {
+                      users.map((user: QueryDocumentSnapshot<DocumentData>) => {
+
+                        const { name, address, role, salary } = user.data();
+                        const { id } = user;
+                        return (
+                          <TableRow
+                            key={id}
+                            sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                          >
+                          <TableCell>{id}</TableCell>
+                          <TableCell align="right"> {name}</TableCell>
+                          <TableCell align="right">{address}</TableCell>
+                          <TableCell align="right">{role}</TableCell>
+                          <TableCell align="right">{salary}</TableCell>
+                          <TableCell >
+                            <NavLink 
+                              to={`/users/${id}`} 
+                              className="btn btn-info mx-2"
+                            >Edit</NavLink>
+                          </TableCell>
+                        </TableRow>);
+                      })
+                    }
                   </TableBody>
                 </Table>
               </TableContainer>
